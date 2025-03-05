@@ -31,24 +31,39 @@ jobs:
         run: npm install
         working-directory: ./mern/frontend
 
-      # Étape 5 : scanner les fichiers
-      - name: Trivy and scan files
+      # Étape 5 : Scanner les fichiers avec Trivy
+      - name: Trivy filesystem scan
         run: trivy fs . > trivyfs.txt
 
-
-      # Étape 6 : S'authentifier auprès de Dockerhub
+      # Étape 6 : S'authentifier auprès de Docker Hub
       - name: Log in to Docker Hub
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      # Étape 7 : Construire et pousser l'image Docker du backend
-      - name: Build and push backend Docker image
+      # Étape 7 : Construire l'image Docker du backend
+      - name: Build backend Docker image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-latest ./mern/backend
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-latest
 
-      # Étape 8 : Construire et pousser l'image Docker du frontend
-      - name: Build and push frontend Docker image
+      # Étape 8 : Scanner l'image Docker du backend avec Trivy
+      - name: Trivy scan backend image
+        run: trivy image ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-latest > trivy-backend-scan.txt
+
+      # Étape 9 : Construire l'image Docker du frontend
+      - name: Build frontend Docker image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-latest ./mern/frontend
+
+      # Étape 10 : Scanner l'image Docker du frontend avec Trivy
+      - name: Trivy scan frontend image
+        run: trivy image ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-latest > trivy-frontend-scan.txt
+
+      # Étape 11 : Pousser l'image Docker du backend vers Docker Hub
+      - name: Push backend Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-latest
+
+      # Étape 12 : Pousser l'image Docker du frontend vers Docker Hub
+      - name: Push frontend Docker image
+        run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-latest
