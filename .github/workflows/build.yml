@@ -2,7 +2,7 @@ name: Build, Analyze, Scan, and Push Docker Images
 on:
   push:
     branches:
-      - main
+      - main 
 jobs:
   build-analyze-scan:
     name: Build, Analyze, Scan, and Push Docker Images  
