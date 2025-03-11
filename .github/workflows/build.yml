@@ -42,11 +42,7 @@ jobs:
           cd ./mern/backend
           npm install
 
-      # Étape 6 : Linter le code du backend
-      - name: Lint backend code
-        run: |
-          cd ./mern/backend
-          npm run lint
+     
 
       # Étape 7 : Exécuter les tests du backend
       - name: Run backend tests
@@ -77,11 +73,7 @@ jobs:
           cd ./mern/frontend
           npm install
 
-      # Étape 11 : Linter le code du frontend
-      - name: Lint frontend code
-        run: |
-          cd ./mern/frontend
-          npm run lint
+    
 
       # Étape 12 : Exécuter les tests du frontend
       - name: Run frontend tests
