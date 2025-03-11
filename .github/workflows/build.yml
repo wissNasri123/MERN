@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20 # Remplacez par la version de Node.js que vous utilisez
-          cache: 'npm' # Active le cache des dépendances npm
 
       # Étape 3 : Analyser le code avec SonarQube
       - name: Build and analyze with SonarQube
