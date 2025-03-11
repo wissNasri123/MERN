@@ -162,7 +162,7 @@ jobs:
 
       # Étape 27 : Sauvegarder les résultats des scans Trivy
       - name: Upload Trivy scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trivy-scan-results
           path: |
