@@ -21,49 +21,149 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      # Étape 3 : Installer les dépendances du backend
+      # Étape 3 : Cache des dépendances du backend
+      - name: Cache backend node_modules
+        uses: actions/cache@v3
+        with:
+          path: ./mern/backend/node_modules
+          key: backend-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            backend-node-modules-
+
+      # Étape 4 : Installer les dépendances du backend
       - name: Install dependencies in backend
         run: npm install
         working-directory: ./mern/backend
 
-      # Étape 4 : Installer les dépendances du frontend
+      # Étape 5 : Linter le code du backend
+      - name: Lint backend code
+        run: npm run lint
+        working-directory: ./mern/backend
+
+      # Étape 6 : Exécuter les tests du backend
+      - name: Run backend tests
+        run: npm test
+        working-directory: ./mern/backend
+
+      # Étape 7 : Scanner les dépendances du backend avec Snyk
+      - name: Scan backend dependencies with Snyk
+        uses: snyk/actions/node@master
+        with:
+          args: --all-projects
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        working-directory: ./mern/backend
+
+      # Étape 8 : Cache des dépendances du frontend
+      - name: Cache frontend node_modules
+        uses: actions/cache@v3
+        with:
+          path: ./mern/frontend/node_modules
+          key: frontend-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            frontend-node-modules-
+
+      # Étape 9 : Installer les dépendances du frontend
       - name: Install dependencies in frontend
         run: npm install
         working-directory: ./mern/frontend
 
-      # Étape 5 : Scanner les fichiers avec Trivy
+      # Étape 10 : Linter le code du frontend
+      - name: Lint frontend code
+        run: npm run lint
+        working-directory: ./mern/frontend
+
+      # Étape 11 : Exécuter les tests du frontend
+      - name: Run frontend tests
+        run: npm test
+        working-directory: ./mern/frontend
+
+      # Étape 12 : Scanner les dépendances du frontend avec Snyk
+      - name: Scan frontend dependencies with Snyk
+        uses: snyk/actions/node@master
+        with:
+          args: --all-projects
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        working-directory: ./mern/frontend
+
+      # Étape 13 : Scanner les fichiers avec Trivy
       - name: Trivy filesystem scan
         run: trivy fs . > trivyfs.txt
 
-      # Étape 6 : S'authentifier auprès de Docker Hub
+      # Étape 14 : S'authentifier auprès de Docker Hub
       - name: Log in to Docker Hub
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      # Étape 7 : Construire l'image Docker du backend
+      # Étape 15 : Construire l'image Docker du backend
       - name: Build backend Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-latest ./mern/backend
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-${{ github.sha }} ./mern/backend
 
-      # Étape 8 : Scanner l'image Docker du backend avec Trivy
+      # Étape 16 : Scanner l'image Docker du backend avec Trivy
       - name: Trivy scan backend image
-        run: trivy image ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-latest > trivy-backend-scan.txt
+        run: trivy image ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-${{ github.sha }} > trivy-backend-scan.txt
 
-      # Étape 9 : Construire l'image Docker du frontend
+      # Étape 17 : Scanner l'image Docker du backend avec Snyk
+      - name: Scan backend Docker image with Snyk
+        uses: snyk/actions/docker@master
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-${{ github.sha }}
+          args: --file=./mern/backend/Dockerfile --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # Étape 18 : Construire l'image Docker du frontend
       - name: Build frontend Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-latest ./mern/frontend
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-${{ github.sha }} ./mern/frontend
 
-      # Étape 10 : Scanner l'image Docker du frontend avec Trivy
+      # Étape 19 : Scanner l'image Docker du frontend avec Trivy
       - name: Trivy scan frontend image
-        run: trivy image ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-latest > trivy-frontend-scan.txt
+        run: trivy image ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-${{ github.sha }} > trivy-frontend-scan.txt
 
-      # Étape 11 : Pousser l'image Docker du backend vers Docker Hub
+      # Étape 20 : Scanner l'image Docker du frontend avec Snyk
+      - name: Scan frontend Docker image with Snyk
+        uses: snyk/actions/docker@master
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-${{ github.sha }}
+          args: --file=./mern/frontend/Dockerfile --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # Étape 21 : Valider l'image Docker du backend
+      - name: Validate backend Docker image
+        run: docker inspect ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-${{ github.sha }}
+
+      # Étape 22 : Valider l'image Docker du frontend
+      - name: Validate frontend Docker image
+        run: docker inspect ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-${{ github.sha }}
+
+      # Étape 23 : Pousser l'image Docker du backend vers Docker Hub
       - name: Push backend Docker image
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-${{ github.sha }}
 
-      # Étape 12 : Pousser l'image Docker du frontend vers Docker Hub
+      # Étape 24 : Pousser l'image Docker du frontend vers Docker Hub
       - name: Push frontend Docker image
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-${{ github.sha }}
+
+      # Étape 25 : Supprimer l'image Docker du backend
+      - name: Clean up backend image
+        run: docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:backend-${{ github.sha }}
+
+      # Étape 26 : Supprimer l'image Docker du frontend
+      - name: Clean up frontend image
+        run: docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/mon-repo-prive:frontend-${{ github.sha }}
+
+      # Étape 27 : Sauvegarder les résultats des scans Trivy
+      - name: Upload Trivy scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-scan-results
+          path: |
+            trivyfs.txt
+            trivy-backend-scan.txt
+            trivy-frontend-scan.txt
