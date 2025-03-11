@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-jobs:
+jobs: 
   build-analyze-scan:
     name: Build, Analyze, Scan, and Push Docker Images  
     runs-on: [Linux]
