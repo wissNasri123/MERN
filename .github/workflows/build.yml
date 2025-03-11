@@ -2,7 +2,7 @@ name: Build, Analyze, Scan, and Push Docker Images
 on:
   push:
     branches:
-      - main 
+      - main
 jobs:
   build-analyze-scan:
     name: Build, Analyze, Scan, and Push Docker Images  
@@ -32,18 +32,18 @@ jobs:
 
       # Étape 4 : Installer les dépendances du backend
       - name: Install dependencies in backend
-        run: npm install
         working-directory: ./mern/backend
+        run: npm install
 
       # Étape 5 : Linter le code du backend
       - name: Lint backend code
-        run: npm run lint
         working-directory: ./mern/backend
+        run: npm run lint
 
       # Étape 6 : Exécuter les tests du backend
       - name: Run backend tests
-        run: npm test
         working-directory: ./mern/backend
+        run: npm test
 
       # Étape 7 : Scanner les dépendances du backend avec Snyk
       - name: Scan backend dependencies with Snyk
@@ -65,18 +65,18 @@ jobs:
 
       # Étape 9 : Installer les dépendances du frontend
       - name: Install dependencies in frontend
-        run: npm install
         working-directory: ./mern/frontend
+        run: npm install
 
       # Étape 10 : Linter le code du frontend
       - name: Lint frontend code
-        run: npm run lint
         working-directory: ./mern/frontend
+        run: npm run lint
 
       # Étape 11 : Exécuter les tests du frontend
       - name: Run frontend tests
-        run: npm test
         working-directory: ./mern/frontend
+        run: npm test
 
       # Étape 12 : Scanner les dépendances du frontend avec Snyk
       - name: Scan frontend dependencies with Snyk
